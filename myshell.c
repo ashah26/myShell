@@ -16,7 +16,6 @@
 
 //parse the string and execute
 void execArgs(char** parsedArgs){
-	printf("insde ::::::::::\n");
 	pid_t pid = fork();
 
 	if(pid == -1){
@@ -196,7 +195,7 @@ int userInput(char* str)
 		buffer[count++] = c;
 	}
 	buffer[count] = '\0';
-	puts(buffer);
+	// puts(buffer);
 
 	// printf("\n>>>>");
 
@@ -265,7 +264,7 @@ int main()
 		//process
 		if(flag == 1)
 			execArgs(parsedArgs);
-		printf("Error noumber::: %d\n", errno);
+		// printf("Error noumber::: %d\n", errno);
 	}
 
 	return 0;
