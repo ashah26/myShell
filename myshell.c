@@ -7,6 +7,7 @@
 #include<fcntl.h>
 #include<readline/readline.h>
 #include<readline/history.h>
+#include<errno.h>
 
 
 // #define O_WRONLY         01
@@ -15,15 +16,13 @@
 
 //parse the string and execute
 void execArgs(char** parsedArgs){
-	printf("insde ::::::::::");
+	printf("insde ::::::::::\n");
 	pid_t pid = fork();
 
 	if(pid == -1){
 		printf("\n Failed forking a child..");
 		return;
 	}else if(pid == 0){
-		printf("insde pid  ::");
-
 		
 
 		//if is IO redirection
@@ -32,45 +31,38 @@ void execArgs(char** parsedArgs){
 
 		for(file_i = 0; parsedArgs[file_i] != NULL; file_i++)
 		{
-			if (strcmp(parsedArgs[file_i], "<") == 0){
-				parsedArgs[file_i] = NULL;
-				strcpy(inputArray, parsedArgs[file_i+1]);
-				in = 2;
-
-			}
-
+				
 			if(strcmp(parsedArgs[file_i], ">") == 0){
 				parsedArgs[file_i] = NULL;
 				strcpy(outputArray, parsedArgs[file_i+1]);
 				out = 2;
 			}
+			else if (strcmp(parsedArgs[file_i], "<") == 0){
+				parsedArgs[file_i] = NULL;
+				strcpy(inputArray, parsedArgs[file_i+1]);
+				in = 2;
+			}
 		}
-		printf("insde ibbbbn %d %d", in, out);
+
 		if(in){
-			printf("insde in");
 			int fd0;
 			if((fd0 = open(inputArray, O_RDONLY, 0)) < 0){
 				perror("Could not open input file");
 				exit(0);
 			}
-
-			dup2(fd0, STDIN_FILENO);
+			dup2(fd0,0);
 			close(fd0);
 		}
 
 		if(out){
-			printf("insde out");
 			int fd1;
-			if((fd1 = open(outputArray, O_WRONLY | O_CREAT, 0644)) < 0){
-				perror("Could not open output file");
-				exit(0);
+			 if((fd1 = open(outputArray, O_WRONLY | O_CREAT, 0644)) < 0){
 			}
 
 			dup2(fd1, STDOUT_FILENO);
 			close(fd1);
 		}
 
-		// if it is simple input
 		char *paths = getenv("PATH");
 		char *buffer;
 
@@ -79,24 +71,27 @@ void execArgs(char** parsedArgs){
 		const char s[1] = ":";
 		int i = 0;
 		token = strtok(paths,s);
+		
 		while(token != NULL){
 			directories[i] = token;
 			token = strtok(NULL,s);
 			i++;
-
-
 		}
+		
 		int ndirectories = i;
 		char s1[1] = "/"; 
 
 		for(int j=0; j<ndirectories;j++){
 			char *thisDir = malloc(sizeof(char) *10000);
+			
 			for(int x=0; x<MAXCOMMANDS ; x++){
 			 	thisDir[x] = directories[j][x];
-			 }
+			}
+
 			strcat(thisDir,"/");
 			strcat(thisDir,parsedArgs[0]);
 			//printf("This Directory: %s\n%s\n", thisDir, parsedArgs[0]);
+			
 			if(access(thisDir,F_OK) >= 0){
 				if(execv(thisDir, parsedArgs) < 0){
 					printf("\n Could not execute command...");
@@ -270,6 +265,7 @@ int main()
 		//process
 		if(flag == 1)
 			execArgs(parsedArgs);
+		printf("Error noumber::: %d\n", errno);
 	}
 
 	return 0;
