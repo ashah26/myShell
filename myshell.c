@@ -4,21 +4,73 @@
 #include<unistd.h>
 #include<sys/types.h>
 #include<sys/wait.h>
+#include<fcntl.h>
+#include<readline/readline.h>
+#include<readline/history.h>
 
 
+// #define O_WRONLY         01
 #define MAXLETTERS 100 //max number of letters supported
 #define MAXCOMMANDS 100 //max number of commands supported
 
 //parse the string and execute
 void execArgs(char** parsedArgs){
-
+	printf("insde ::::::::::");
 	pid_t pid = fork();
 
 	if(pid == -1){
 		printf("\n Failed forking a child..");
 		return;
 	}else if(pid == 0){
+		printf("insde pid  ::");
 
+		
+
+		//if is IO redirection
+		int fd0, fd1, file_i, in =0, out= 0;
+		char inputArray[64], outputArray[64];
+
+		for(file_i = 0; parsedArgs[file_i] != NULL; file_i++)
+		{
+			if (strcmp(parsedArgs[file_i], "<") == 0){
+				parsedArgs[file_i] = NULL;
+				strcpy(inputArray, parsedArgs[file_i+1]);
+				in = 2;
+
+			}
+
+			if(strcmp(parsedArgs[file_i], ">") == 0){
+				parsedArgs[file_i] = NULL;
+				strcpy(outputArray, parsedArgs[file_i+1]);
+				out = 2;
+			}
+		}
+		printf("insde ibbbbn %d %d", in, out);
+		if(in){
+			printf("insde in");
+			int fd0;
+			if((fd0 = open(inputArray, O_RDONLY, 0)) < 0){
+				perror("Could not open input file");
+				exit(0);
+			}
+
+			dup2(fd0, STDIN_FILENO);
+			close(fd0);
+		}
+
+		if(out){
+			printf("insde out");
+			int fd1;
+			if((fd1 = open(outputArray, O_WRONLY | O_CREAT, 0644)) < 0){
+				perror("Could not open output file");
+				exit(0);
+			}
+
+			dup2(fd1, STDOUT_FILENO);
+			close(fd1);
+		}
+
+		// if it is simple input
 		char *paths = getenv("PATH");
 		char *buffer;
 
@@ -42,19 +94,17 @@ void execArgs(char** parsedArgs){
 			for(int x=0; x<MAXCOMMANDS ; x++){
 			 	thisDir[x] = directories[j][x];
 			 }
-			strcat(thisDir,s1);
+			strcat(thisDir,"/");
 			strcat(thisDir,parsedArgs[0]);
-			//printf("This Directory: %s\n", thisDir);
+			//printf("This Directory: %s\n%s\n", thisDir, parsedArgs[0]);
 			if(access(thisDir,F_OK) >= 0){
 				if(execv(thisDir, parsedArgs) < 0){
 					printf("\n Could not execute command...");
 				}
 				exit(0);
 			}
-			
 		}
 		printf("Not found in directories\n");
-
 	}else{
 		wait(NULL);
 		return;
@@ -142,23 +192,33 @@ int process_string(char* string, char** parsedArgs)
 int userInput(char* str)
 {	
 	//initialize buffer to take the user input
+	char c;
+	int count = 0;
 	char* buffer = (char *) malloc(sizeof(char) * 1024);
 	
-	printf("\n>>>>");
-
-	int i = 0;
-	while (1) {
-		scanf("%c", &buffer[i]);
-	    if (buffer[i] == '\n') {
-	      break;
-	    }
-	    else {
-	      i++;
-	    }
+	printf("\n>>>> ");
+	while((c= getchar()) != '\n'){
+		buffer[count++] = c;
 	}
-	buffer[i] = '\0';
+	buffer[count] = '\0';
+	puts(buffer);
 
+	// printf("\n>>>>");
 
+	// int i = 0;
+	// while (1) {
+	// 	scanf("%c", &buffer[i]);
+	//     if (buffer[i] == '\n') {
+	//       break;
+	//     }
+	//     else {
+	//       i++;
+	//     }
+	// }
+	// buffer[i] = '\0';
+
+	//buffer = readline("\n>>>> ");
+	//printf("%s\n", buffer);
 	if(strlen(buffer) != 0){
 		strcpy(str, buffer);
 		return 0;
