@@ -16,12 +16,26 @@
 
 //parse the string and execute
 void execArgs(char** parsedArgs){
+	
+	int background = 0;
+	
+	if(strcmp(parsedArgs[0], "bg") == 0){
+			printf("In background\n");
+			background = 1;
+			for(int i = 0; parsedArgs[i] !=NULL; i++){
+				parsedArgs[i] = parsedArgs[i+1];
+			}
+			for(int i = 0; parsedArgs[i] !=NULL; i++){
+				printf("In background parse args::: %s\n", parsedArgs[i]);
+			}
+		}
 	pid_t pid = fork();
-
+	
 	if(pid == -1){
 		printf("\n Failed forking a child..");
 		return;
 	}else if(pid == 0){
+		
 		
 
 		//if is IO redirection
@@ -76,10 +90,10 @@ void execArgs(char** parsedArgs){
 			token = strtok(NULL,s);
 			i++;
 		}
-		
-		int ndirectories = i;
-		char s1[1] = "/"; 
 
+		int ndirectories = i;
+		// char s1[1] = "/"; 
+		// printf("length of n directories : %d\n",ndirectories);
 		for(int j=0; j<ndirectories;j++){
 			char *thisDir = malloc(sizeof(char) *10000);
 			
@@ -88,8 +102,9 @@ void execArgs(char** parsedArgs){
 			}
 
 			strcat(thisDir,"/");
-			strcat(thisDir,parsedArgs[0]);
-			//printf("This Directory: %s\n%s\n", thisDir, parsedArgs[0]);
+			strcat(thisDir,parsedArgs[0]);	
+			
+			//printf("This Directory: %s\n%s\n%d\n))", thisDir, parsedArgs[0], access(thisDir,F_OK));
 			
 			if(access(thisDir,F_OK) >= 0){
 				if(execv(thisDir, parsedArgs) < 0){
@@ -100,7 +115,11 @@ void execArgs(char** parsedArgs){
 		}
 		printf("Not found in directories\n");
 	}else{
-		wait(NULL);
+		// printf("In else background::%d\n",background);
+		if(!background){
+			printf("In Wait\n");
+			wait(NULL);	
+		}
 		return;
 	}
 }
